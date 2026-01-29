@@ -1,69 +1,138 @@
 # FireMutttttt
 
-这是一个使用 Unreal Engine 开发的第一人称射击游戏项目。
+**UE5 First Person 模板扩展：局域网多人混战 + NPC 持枪压制**
 
-## 项目要求
+基于 Unreal Engine 5.7.1 开发的局域网多人对战射击游戏，支持玩家间 PVP 对战与 NPC 持枪压制机制。
 
-- **Unreal Engine 版本**: 请根据项目文件确认版本
-- **操作系统**: Windows / macOS / Linux
-- **Git LFS**: 必需（用于处理大文件）
+---
 
-## 克隆和设置
+## 📋 项目信息
 
-本项目使用 Git LFS 来管理大文件。在克隆仓库之前，请确保已安装 Git LFS。
+- **作者**: 尹智晗
+- **学校**: 湖南大学
+- **引擎版本**: Unreal Engine 5.7.1
+- **项目类型**: 第一人称射击（局域网多人对战）
+- **开发时间**: 2025年12月
 
-### 1. 安装 Git LFS
+---
 
-```bash
-# Windows (使用 Git 安装程序，通常已包含 LFS)
-git lfs install
+## 🎮 游戏玩法
 
-# macOS (使用 Homebrew)
-brew install git-lfs
-git lfs install
+### 核心规则
 
-# Linux (Ubuntu/Debian)
-sudo apt-get install git-lfs
-git lfs install
+这是一个**局域网多人混战（Free-For-All）**游戏：
+
+- **联机方式**: 局域网 ListenServer
+- **得分规则**: 击杀 1 名玩家获得 **1 分**
+- **胜利条件**: 任意玩家首先达到 **10 分**立即获胜，触发结算并结束本局
+- **NPC 敌人**: 地图中存在持枪 NPC，会主动攻击并消耗玩家血量
+- **NPC 可击败**: 玩家可以击败 NPC 来清除威胁和缓解压力
+
+### 游戏特色
+
+- ✅ 服务器裁决的公平对战（防作弊）
+- ✅ 实时血量与分数同步
+- ✅ 死亡与自动重生系统
+- ✅ NPC AI 自动导航与射击
+- ✅ 完整的 HUD 与结算 UI
+
+---
+
+## 🛠️ 技术实现
+
+### 1. 玩家系统（PVP）
+
+- 基于 First Person 模板：移动、跳跃、开火
+- 开火命中后对目标玩家应用伤害
+- 击杀判定由服务器完成（Client→Server RPC）
+
+### 2. 血量系统与死亡重生
+
+- 玩家血量在服务器维护并 Replicated 到客户端
+- 血量归零触发死亡：禁用输入、播放死亡效果
+- 延时后在出生点自动重生
+
+### 3. NPC 持枪敌人
+
+- **移动**: 基于 NavMesh 追踪最近玩家
+- **攻击**: 满足射程/视线条件时自动开火
+- **可击败**: NPC 拥有独立血量与死亡逻辑
+
+### 4. 计分与胜利机制
+
+- 击杀玩家得 1 分（服务器侧监听击杀事件）
+- 当任意玩家分数 ≥ 10 时，服务器宣布胜利并同步结算 UI
+
+### 5. 局域网联机同步
+
+- **网络模式**: ListenServer（局域网）
+- **同步内容**: 血量、分数、死亡/重生状态
+- **RPC 架构**:
+  - Client→Server: 开火/攻击请求
+  - Server→All: 击杀提示/结算/特效同步
+
+### 6. UI 系统
+
+- **HUD**: 实时显示血量与当前分数
+- **结算界面**: 玩家达到 10 分时弹出胜利/失败结算
+
+---
+
+## 📁 项目结构
+
+```
+Content/
+├── FirstPerson/              # 第一人称模式资源
+│   ├── Blueprints/          # 角色、游戏模式等蓝图
+│   └── Anims/               # 第一人称动画
+├── Variant_Shooter/          # 竞技场射击模式
+│   ├── Blueprints/
+│   │   ├── AI/              # NPC AI 系统
+│   │   ├── Pickups/         # 武器拾取系统
+│   │   └── BP_ShooterCharacter.uasset  # 玩家角色
+│   ├── UI/                  # HUD 与结算界面
+│   └── Lvl_ArenaShooter.umap  # 对战地图
+├── Weapons/                  # 武器资源
+│   ├── Pistol/              # 手枪
+│   ├── Rifle/               # 步枪
+│   └── GrenadeLauncher/     # 榴弹发射器
+└── Characters/Mannequins/    # 角色模型与动画
+
+Config/                       # 引擎配置文件
 ```
 
-### 2. 克隆仓库
+---
 
-```bash
-git clone https://github.com/YOUR_USERNAME/FireMutttttt.git
-cd FireMutttttt
-```
+## 🎯 作业要求对照
 
-### 3. 确认 LFS 文件已下载
+| 要求                                       | 实现说明                                                                         |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| (1) 敌人会移动并攻击玩家；玩家可以击败敌人 | ✅ NPC 持枪敌人在 NavMesh 上移动追踪玩家并射击，造成伤害；NPC 具备血量与死亡逻辑 |
+| (2) 基础得分与游戏胜利机制                 | ✅ 击杀玩家得 1 分；先达到 10 分触发胜利结算                                     |
+| (3) 多人网络对战                           | ✅ 局域网联机（ListenServer），服务器裁决击杀计分、血量与死亡                    |
 
-```bash
-git lfs pull
-```
+---
 
-## 打开项目
+## 📝 开发笔记
 
-1. 右键点击 `FireMutttttt.uproject` 文件
-2. 选择 "Switch Unreal Engine version..." 或直接用 Unreal Engine 打开
-3. 如果提示重新编译模块，点击 "Yes"
+### 网络同步关键点
 
-## 项目结构
+- 所有影响游戏状态的逻辑必须在服务器执行
+- 客户端通过 RPC 请求操作，服务器验证后执行
+- 使用 `Replicated` 变量同步状态到所有客户端
 
-- **Content/FirstPerson**: 第一人称模式的关卡和资源
-- **Content/Variant_Shooter**: 竞技场射击模式的关卡和资源
-- **Content/Weapons**: 武器系统（手枪、步枪、榴弹发射器）
-- **Content/Characters/Mannequins**: 角色模型
-- **Content/Input**: 输入映射配置
+### NPC AI 实现
 
-## 游戏模式
+- 使用 `AI Controller` + `Behavior Tree` 实现敌人行为
+- NavMesh 确保敌人可以在地图中正确寻路
+- 视线检测与射程判断用于攻击决策
 
-本项目包含两个游戏模式：
-1. **第一人称模式** (`Lvl_FirstPerson`)
-2. **竞技场射击模式** (`Lvl_ArenaShooter`)
+---
 
-## 贡献
+## 📄 许可证
 
-欢迎提交 Pull Request 或报告 Issues。
+本项目为课程大作业，仅供学习交流使用。
 
-## 许可证
+---
 
-[请添加你的许可证信息]
+
